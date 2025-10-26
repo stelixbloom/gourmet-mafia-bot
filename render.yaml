@@ -19,7 +19,6 @@ services:
       - key: LINE_ACCESS_TOKEN
         sync: false
       - key: DATABASE_URL
-        fromService:
+        fromDatabase:
           name: gourmet-mafia-db
-          type: pserv
           property: connectionString
