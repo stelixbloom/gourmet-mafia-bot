@@ -15,7 +15,7 @@ services:
       - key: DATABASE_URL
         fromService:
           name: gourmet-mafia-db
-          type: database
+          type: pserv
           property: connectionString
 databases:
   - name: gourmet-mafia-db
