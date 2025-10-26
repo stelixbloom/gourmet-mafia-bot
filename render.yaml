@@ -14,3 +14,9 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false   # RenderのPostgres作成後に表示される接続URLを設定
+databases:
+  - name: gourmet-mafia-db
+    databaseName: gourmet
+    user: gourmet_user
+    plan: starter
+    region: singapore
