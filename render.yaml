@@ -13,7 +13,9 @@ services:
       - key: LINE_ACCESS_TOKEN
         sync: false
       - key: DATABASE_URL
-        sync: false   # RenderのPostgres作成後に表示される接続URLを設定
+        fromService:
+          type: pserv
+          name: gourmet-db
 databases:
   - name: gourmet-mafia-db
     databaseName: gourmet
