@@ -33,7 +33,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.com.example.ApplicationKt")
+    mainClass.set("com.example.ApplicationKt")
 }
 
 tasks.test {
