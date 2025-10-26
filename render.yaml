@@ -1,3 +1,9 @@
+databases:
+  - name: gourmet-mafia-db
+    databaseName: gourmet
+    user: gourmet_user
+    plan: basic-256mb
+    region: oregon
 services:
   - type: web
     name: gourmet-mafia
@@ -17,9 +23,3 @@ services:
           name: gourmet-mafia-db
           type: pserv
           property: connectionString
-databases:
-  - name: gourmet-mafia-db
-    databaseName: gourmet
-    user: gourmet_user
-    plan: basic-256mb
-    region: oregon
