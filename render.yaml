@@ -2,7 +2,7 @@ services:
   - type: web
     name: gourmet-mafia
     runtime: docker
-    region: singapore
+    region: oregon
     plan: starter
     branch: main
     dockerfilePath: ./Dockerfile
@@ -22,4 +22,4 @@ databases:
     databaseName: gourmet
     user: gourmet_user
     plan: starter
-    region: singapore
+    region: oregon
