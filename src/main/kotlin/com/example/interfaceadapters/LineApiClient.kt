@@ -26,14 +26,14 @@ data class TextMsg(
 // LINEの「クイックリプライ」ボタン
 @Serializable
 data class QuickAction(
-    val type: String="message",
+    val type: String = "message",
     val label: String,
     val text: String)
 
 // LINEの「クイックリプライ」ボタン
 @Serializable
 data class QuickReplyItem(
-    val type: String="action",
+    val type: String = "action",
     val action: QuickAction)
 
 // LINEの「クイックリプライ」ボタン
@@ -45,7 +45,7 @@ data class QuickReply(
 @Serializable
 @SerialName("text_with_quick")
 data class TextWithQuick(
-    val type: String="text",
+    val type: String = "text",
     val text: String,
     val quickReply: QuickReply? = null
 ): LineMessage
@@ -60,9 +60,15 @@ data class ReplyBody(
 class LineApiClient(private val channelAccessToken: String) {
     // Ktorの非同期HTTPクライアント
     private val client = HttpClient(CIO) {
-        // プラグイン。JSON 送受信をサポート
-        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+        install(ContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                ignoreUnknownKeys = true
+                classDiscriminator = "kind" // ← コレが超重要
+            })
+        }
     }
+
 
     suspend fun replyText(
         replyToken: String, // LINE側がWebhookで送ってきた「返信対象メッセージ」のトーク識別子
