@@ -8,14 +8,18 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonClassDiscriminator
 import org.slf4j.LoggerFactory
 
 //「LINEに送るメッセージ」の基本的型。TextMsg や TextWithQuick など、異なる形式のメッセージを統一的に扱うためのベース
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonClassDiscriminator("kind")
 sealed interface LineMessage
 
 // 実際にAPIに送るJSON例
@@ -46,6 +50,7 @@ data class QuickReply(
 
 //「どのエリア探しますか？」のメッセージ＋ボタン一覧
 @Serializable
+@SerialName("text_with_quick")
 data class TextWithQuick(
     val type: String = "text",
     val text: String,
