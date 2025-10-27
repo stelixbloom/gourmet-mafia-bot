@@ -34,6 +34,7 @@ fun Application.module() {
 
     val logger = LoggerFactory.getLogger("GourmetMafiaApp")
 
+    // エラーハンドリング用
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             call.respond(
@@ -41,6 +42,15 @@ fun Application.module() {
                 message = "Internal Server Error"
             )
         }
+    }
+
+    // コンテンツ変換プラグイン
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            classDiscriminator = "kind"
+        })
     }
 
     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
@@ -61,6 +71,7 @@ fun Application.module() {
     val lineClient = LineApiClient(AppConfig.channelAccessToken)
     val controller = LineWebhookController(verifier, useCase, lineClient)
 
+    // ルーティング
     routing {
         get("/health") {
             logger.info("🩺 Health check OK")

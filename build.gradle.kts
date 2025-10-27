@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.1.20"
+    kotlin("plugin.serialization") version "2.1.20"
     id("application")
 }
 
@@ -24,6 +25,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:$ktor")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
     // DB
     implementation("org.jetbrains.exposed:exposed-core:0.50.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.50.1")

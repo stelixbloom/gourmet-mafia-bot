@@ -7,25 +7,55 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-//「LINEに送るメッセージ」の基本的型。TextMsg や TextWithQuick など、異なる形式のメッセージを統一的に扱うためのベースになる
-@Serializable sealed interface LineMessage
+//「LINEに送るメッセージ」の基本的型。TextMsg や TextWithQuick など、異なる形式のメッセージを統一的に扱うためのベース
+@Serializable
+sealed interface LineMessage
+
 // 実際にAPIに送るJSON例
-@Serializable data class TextMsg(val type: String = "text", val text: String): LineMessage
-// LINEの「クイックリプライ」ボタン
-@Serializable data class QuickAction(val type: String="message", val label: String, val text: String)
-// LINEの「クイックリプライ」ボタン
-@Serializable data class QuickReplyItem(val type: String="action", val action: QuickAction)
-// LINEの「クイックリプライ」ボタン
-@Serializable data class QuickReply(val items: List<QuickReplyItem>)
-//「どのエリア探しますか？」のメッセージ＋ボタン一覧
-@Serializable data class TextWithQuick(
-    val type: String="text", val text: String, val quickReply: QuickReply? = null
+@Serializable
+@SerialName("text")
+data class TextMsg(
+    val type: String = "text",
+    val text: String
 ): LineMessage
+
+// LINEの「クイックリプライ」ボタン
+@Serializable
+data class QuickAction(
+    val type: String="message",
+    val label: String,
+    val text: String)
+
+// LINEの「クイックリプライ」ボタン
+@Serializable
+data class QuickReplyItem(
+    val type: String="action",
+    val action: QuickAction)
+
+// LINEの「クイックリプライ」ボタン
+@Serializable
+data class QuickReply(
+    val items: List<QuickReplyItem>)
+
+//「どのエリア探しますか？」のメッセージ＋ボタン一覧
+@Serializable
+@SerialName("text_with_quick")
+data class TextWithQuick(
+    val type: String="text",
+    val text: String,
+    val quickReply: QuickReply? = null
+): LineMessage
+
 // API に送信するリクエスト全体のJSON構造。「replyToken」はLINEがWebhookで送ってくる「返信対象トーク」の識別子
-@Serializable data class ReplyBody(val replyToken: String, val messages: List<LineMessage>)
+@Serializable
+data class ReplyBody(
+    val replyToken: String,
+    val messages: List<LineMessage>)
+
 // LineApiClientクラス
 class LineApiClient(private val channelAccessToken: String) {
     // Ktorの非同期HTTPクライアント
