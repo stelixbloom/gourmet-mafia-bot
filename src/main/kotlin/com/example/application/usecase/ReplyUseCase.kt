@@ -34,6 +34,6 @@ class ReplyUseCase(
             }
         }
 
-        return ReplyMessage("「検索」と送ると、エリア候補を表示します。")
+        return ReplyMessage("「検索開始」からお店を検索してください！")
     }
 }

@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 class ExposedPlaceRepository : PlaceQueryPort {
     override fun findActiveByCity(city: String, limit: Int): List<Place> = transaction {
         PlaceTable
-            .select { (PlaceTable.city eq city) and (PlaceTable.defectFlag eq 0.toInt()) }
+            .select { (PlaceTable.city eq city) and (PlaceTable.defectFlag eq 0) }
             .limit(limit)
             .map { it.toPlace() }
     }

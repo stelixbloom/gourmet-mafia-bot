@@ -118,7 +118,7 @@ class LineApiClient(private val channelAccessToken: String) {
         }
 
         val responseText = response.bodyAsText()
-        logger.info("📥 LINE API response: [${response.status}] $responseText")
+        logger.info("LINE API response: [${response.status}] $responseText")
 
         if (!response.status.isSuccess()) {
             error("LINE reply failed: ${response.status} $responseText")
