@@ -53,8 +53,6 @@ fun Application.module() {
         })
     }
 
-    install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
-
     // DB設定
     try {
         DatabaseFactory.init(AppConfig.databaseUrl)
