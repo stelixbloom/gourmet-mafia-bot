@@ -5,11 +5,14 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 
 //「LINEに送るメッセージ」の基本的型。TextMsg や TextWithQuick など、異なる形式のメッセージを統一的に扱うためのベース
 @Serializable
@@ -43,7 +46,6 @@ data class QuickReply(
 
 //「どのエリア探しますか？」のメッセージ＋ボタン一覧
 @Serializable
-@SerialName("text_with_quick")
 data class TextWithQuick(
     val type: String = "text",
     val text: String,
@@ -58,13 +60,17 @@ data class ReplyBody(
 
 // LineApiClientクラス
 class LineApiClient(private val channelAccessToken: String) {
+
+    private val logger = LoggerFactory.getLogger("GourmetMafiaAppResponseLog")
+
     // Ktorの非同期HTTPクライアント
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
                 prettyPrint = true
                 ignoreUnknownKeys = true
-                classDiscriminator = "kind" // ← コレが超重要
+                classDiscriminator = "kind"
+                encodeDefaults = true
             })
         }
     }
@@ -85,15 +91,32 @@ class LineApiClient(private val channelAccessToken: String) {
                 })
             )
 
+//        val response = client.post("https://api.line.me/v2/bot/message/reply") {
+//            header(HttpHeaders.Authorization, "Bearer $channelAccessToken")
+//            contentType(ContentType.Application.Json)
+//            setBody(ReplyBody(replyToken, listOf(msg)))
+//        }
+//        // ステータスコードが200系以外なら、LINE APIエラーとして例外を投げる
+//        if (!response.status.isSuccess()) {
+//            val body = response.body<String>()
+//            error("LINE reply failed: ${response.status} $body")
+//        }
+
+        val requestBody = ReplyBody(replyToken, listOf(msg))
+
+        logger.info("Sending LINE reply: ${Json.encodeToString(requestBody)}")
+
         val response = client.post("https://api.line.me/v2/bot/message/reply") {
             header(HttpHeaders.Authorization, "Bearer $channelAccessToken")
             contentType(ContentType.Application.Json)
-            setBody(ReplyBody(replyToken, listOf(msg)))
+            setBody(requestBody)
         }
-        // ステータスコードが200系以外なら、LINE APIエラーとして例外を投げる
+
+        val responseText = response.bodyAsText()
+        logger.info("📥 LINE API response: [${response.status}] $responseText")
+
         if (!response.status.isSuccess()) {
-            val body = response.body<String>()
-            error("LINE reply failed: ${response.status} $body")
+            error("LINE reply failed: ${response.status} $responseText")
         }
     }
 }
