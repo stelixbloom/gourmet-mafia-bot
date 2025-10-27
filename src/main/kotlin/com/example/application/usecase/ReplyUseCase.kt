@@ -13,7 +13,7 @@ class ReplyUseCase(
     fun execute(text: String): ReplyMessage {
         val t = text.trim()
 
-        if (t == "検索") {
+        if (t == "検索開始") {
             return ReplyMessage(
                 text = "エリアを選んでください",
                 quickReplies = listOf(
