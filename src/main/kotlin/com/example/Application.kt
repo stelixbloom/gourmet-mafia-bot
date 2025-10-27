@@ -72,7 +72,6 @@ fun Application.module() {
     // ルーティング
     routing {
         get("/health") {
-            logger.info("🩺 Health check OK")
             call.respondText("ok")
         }
 
