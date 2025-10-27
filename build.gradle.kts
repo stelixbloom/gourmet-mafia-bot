@@ -23,6 +23,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktor")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
     // DB
     implementation("org.jetbrains.exposed:exposed-core:0.50.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.50.1")
