@@ -3,7 +3,7 @@ package com.example.application.usecase
 import com.example.application.dto.ReplyMessage
 import com.example.domain.port.PlaceQueryPort
 
-/**
+/**B
  * 受け取ったテキストに応じて返信内容を決めるUseCaseクラス
  */
 class ReplyUseCase(

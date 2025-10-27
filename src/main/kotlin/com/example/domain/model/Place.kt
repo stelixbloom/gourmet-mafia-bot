@@ -5,5 +5,5 @@ data class Place(
     val name: String,        // 店名
     val city: String,        // 東京都渋谷区 等の 都道府県市区町村
     val shopUrl: String,     // GoogleMapsURL
-    val active: Boolean      // 有効/無効 フラグ
+    val defectFlag: Int      // 有効/無効 フラグ
 )
