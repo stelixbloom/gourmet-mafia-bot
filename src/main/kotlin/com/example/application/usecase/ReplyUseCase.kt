@@ -3,7 +3,7 @@ package com.example.application.usecase
 import com.example.application.dto.ReplyMessage
 import com.example.domain.port.PlaceQueryPort
 
-/**B
+/**
  * 受け取ったテキストに応じて返信内容を決めるUseCaseクラス
  */
 class ReplyUseCase(
@@ -15,11 +15,7 @@ class ReplyUseCase(
 
         if (t == "検索開始") {
             return ReplyMessage(
-                text = "エリアを選んでください",
-                quickReplies = listOf(
-                    "東京都渋谷区" to "東京都渋谷区",
-                    "東京都港区" to "東京都港区"
-                )
+                text = "検索したいエリアを「都道府県」+「市区町村」の形式で入力してください。（例：東京都渋谷区）"
             )
         }
 
