@@ -34,7 +34,6 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.3")
     // Redis（Valkey）
     implementation("redis.clients:jedis:5.1.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation(kotlin("test"))
 }
