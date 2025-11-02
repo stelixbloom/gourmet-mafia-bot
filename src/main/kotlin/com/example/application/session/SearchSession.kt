@@ -1,6 +1,7 @@
 package com.example.application.session
 
 import com.example.domain.model.HoursBand
+import kotlinx.serialization.Serializable
 
 enum class Step {
     WAIT_AREA, // エリア
@@ -9,6 +10,7 @@ enum class Step {
     WAIT_HOURS // 利用シーン（営業時間）
 }
 
+@Serializable
 data class SearchSession(
     val userId: String,
     val step: Step = Step.WAIT_AREA,
