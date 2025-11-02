@@ -44,7 +44,10 @@ class LineWebhookController(
 
             val text = msg["text"]?.jsonPrimitive?.content ?: continue
 
-            val reply = replyUseCase.execute(text)
+            val source = ev["source"]?.jsonObject ?: continue
+            val userId = source["userId"]?.jsonPrimitive?.content ?: continue
+
+            val reply = replyUseCase.execute(userId, text)
             lineClient.replyText(replyToken, reply.text, reply.quickReplies)
         }
         call.respond(HttpStatusCode.OK)

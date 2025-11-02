@@ -1,10 +1,20 @@
 databases:
+    # Postgresql
   - name: gourmet-mafia-db
     databaseName: gourmet
     user: gourmet_user
     plan: basic-256mb
     region: oregon
 services:
+  # Valkey（Redis）
+  - type: keyvalue
+    name: gourmet-mafia-redis
+    region: oregon
+    plan: starter
+    ipAllowList: [ ]  # 内部接続のみ許可（必須項目）
+    # maxmemoryPolicy: allkeys-lru  # 任意。省略時は allkeys-lru
+
+    # Application
   - type: web
     name: gourmet-mafia
     runtime: docker
@@ -21,4 +31,9 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: gourmet-mafia-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: gourmet-mafia-redis
+          type: keyvalue
           property: connectionString

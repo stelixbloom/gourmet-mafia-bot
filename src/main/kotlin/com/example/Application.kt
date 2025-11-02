@@ -1,10 +1,12 @@
 package com.example
 
 
+import com.example.application.session.RedisSessionStore
+import com.example.application.session.SessionStore
 import com.example.application.usecase.ReplyUseCase
 import com.example.config.AppConfig
 import com.example.dbaccess.DatabaseFactory
-import com.example.dbaccess.ExposedPlaceRepository
+import com.example.dbaccess.PlaceRepository
 import com.example.interfaceadapters.LineApiClient
 import com.example.interfaceadapters.LineSignatureVerifier
 import com.example.interfaceadapters.LineWebhookController
@@ -63,8 +65,9 @@ fun Application.module() {
     }
 
     // DI
-    val placeRepo = ExposedPlaceRepository()
-    val useCase = ReplyUseCase(placeRepo)
+    val placeRepo = PlaceRepository()
+    val sessionStore: SessionStore = RedisSessionStore(AppConfig.redisUrl)
+    val useCase = ReplyUseCase(placeRepo, sessionStore)
     val verifier = LineSignatureVerifier(AppConfig.channelSecret)
     val lineClient = LineApiClient(AppConfig.channelAccessToken)
     val controller = LineWebhookController(verifier, useCase, lineClient)
