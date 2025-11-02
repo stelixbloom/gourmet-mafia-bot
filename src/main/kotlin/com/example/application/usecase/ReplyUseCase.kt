@@ -1,6 +1,6 @@
 package com.example.application.usecase
 
-import com.example.application.dto.ReplyMessage
+import com.example.application.dto.LineReplyMessageDto
 import com.example.domain.port.PlaceQueryPort
 
 /**
@@ -10,12 +10,12 @@ class ReplyUseCase(
     private val placeQueryPort: PlaceQueryPort
 ) {
 
-    fun execute(text: String): ReplyMessage {
+    fun execute(text: String): LineReplyMessageDto {
         val t = text.trim()
 
         if (t == "検索開始") {
-            return ReplyMessage(
-                text = "検索したいエリアを「都道府県」+「市区町村」の形式で入力してください。（例：東京都渋谷区）"
+            return LineReplyMessageDto(
+                text = "検索したいエリアを「都道府県」+「市区町村」の形式で入力してください。\n（例：東京都渋谷区）"
             )
         }
 
@@ -23,13 +23,15 @@ class ReplyUseCase(
         if (isArea) {
             val places = placeQueryPort.findActiveByCity(t, limit = 5)
             return if (places.isEmpty()) {
-                ReplyMessage("該当するものがありませんでした。")
+                LineReplyMessageDto("該当するものがありませんでした。")
             } else {
                 val lines = places.joinToString("\n") { "・${it.name}\n${it.shopUrl}" }
-                ReplyMessage("おすすめ（$t）：\n$lines")
+                LineReplyMessageDto("おすすめ（$t）：\n$lines")
             }
+        } else {
+            LineReplyMessageDto("該当するものがありませんでした。")
         }
 
-        return ReplyMessage("「検索開始」からお店を検索してください！")
+        return LineReplyMessageDto("「検索開始」からお店を検索してください！")
     }
 }
