@@ -7,7 +7,7 @@ import redis.clients.jedis.JedisPooled
 class  RedisSessionStore(redisUrl: String): SessionStore {
     private val client = JedisPooled(redisUrl) // 例: redis://default:pass@host:6379
 
-    private fun key(u: String) = "session:$u"
+    private fun key(id: String) = "session:$id"
 
     override fun get(userId: String): SearchSession? {
         val s = client.get(key(userId)) ?: return null

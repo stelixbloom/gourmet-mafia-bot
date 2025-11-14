@@ -24,6 +24,8 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
       - key: LINE_CHANNEL_SECRET
         sync: false
       - key: LINE_ACCESS_TOKEN

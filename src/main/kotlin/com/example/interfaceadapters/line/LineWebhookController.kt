@@ -1,4 +1,4 @@
-package com.example.interfaceadapters
+package com.example.interfaceadapters.line
 
 import com.example.application.usecase.ReplyUseCase
 import io.ktor.http.*

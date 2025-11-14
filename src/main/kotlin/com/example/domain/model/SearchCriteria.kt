@@ -7,4 +7,10 @@ data class SearchCriteria(
     val hoursBand: HoursBand? = null        // モーニング/ランチ/ディナー/おまかせ
 )
 
-enum class HoursBand { MORNING, LUNCH, DINNER }
+//enum class HoursBand { MORNING, LUNCH, DINNER }
+
+enum class HoursBand(val jpWord: String) {
+    MORNING("モーニング"),
+    LUNCH("ランチ"),
+    DINNER("ディナー")
+}

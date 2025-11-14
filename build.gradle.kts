@@ -14,6 +14,8 @@ repositories {
 dependencies {
     // TODO 全体的にバージョン見直し
     val ktor = "2.3.12"
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+    implementation("io.insert-koin:koin-logger-slf4j:3.5.6")
     implementation("io.ktor:ktor-server-core:$ktor")
     implementation("io.ktor:ktor-server-netty:$ktor")
     implementation("io.ktor:ktor-server-status-pages:$ktor")

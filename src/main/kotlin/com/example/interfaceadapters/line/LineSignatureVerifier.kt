@@ -1,4 +1,4 @@
-package com.example.interfaceadapters
+package com.example.interfaceadapters.line
 
 import java.security.MessageDigest
 import java.util.Base64

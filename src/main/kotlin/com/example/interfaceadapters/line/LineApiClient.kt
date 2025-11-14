@@ -1,7 +1,6 @@
-package com.example.interfaceadapters
+package com.example.interfaceadapters.line
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*

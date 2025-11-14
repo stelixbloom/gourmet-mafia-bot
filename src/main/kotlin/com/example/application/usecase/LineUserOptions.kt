@@ -2,7 +2,8 @@ package com.example.application.usecase
 
 import com.example.domain.model.HoursBand
 
-object Options {
+object LineUserOptions {
+
     // ジャンル
     val GENRE_LABELS = listOf(
         "おまかせ", "和食系", "洋食系", "アジア・エスニック系",
@@ -25,10 +26,10 @@ object Options {
     val PRICE_LABELS = listOf("おまかせ", "安い", "カジュアル", "やや高め", "お高め")
     fun parsePrice(input: String): Pair<String, Set<Int>?>? = when (input) {
         "おまかせ" -> "おまかせ" to null
-        "安い" -> "安い" to setOf(0,1)            // PRICE_LEVEL_FREE, PRICE_LEVEL_INEXPENSIVE
+        "安い" -> "安い" to setOf(0,1)           // PRICE_LEVEL_FREE, PRICE_LEVEL_INEXPENSIVE
         "カジュアル" -> "カジュアル" to setOf(2)   // PRICE_LEVEL_MODERATE
         "やや高め" -> "やや高め" to setOf(3)      // PRICE_LEVEL_EXPENSIVE
-        "お高め" -> "お高め" to setOf(4)          // PRICE_LEVEL_VERY_EXPENSIVE
+        "お高め" -> "お高め" to setOf(4)         // PRICE_LEVEL_VERY_EXPENSIVE
         else -> null
     }
 
