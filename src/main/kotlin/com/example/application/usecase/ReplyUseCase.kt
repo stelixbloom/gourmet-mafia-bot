@@ -16,8 +16,6 @@ class ReplyUseCase(
     suspend fun execute(userId: String, textRaw: String): LineReplyMessageDto {
         val text = textRaw.trim()
 
-        // TODO 問い合わせ
-
         if (text == "問い合わせ") {
             return LineReplyMessageDto(
                 text = "こちらのメールアドレスへご連絡ください✉️\n「メールアドレス」",
@@ -40,7 +38,7 @@ class ReplyUseCase(
             Step.WAIT_AREA -> {
                 val isArea = text.endsWith("区") || text.endsWith("市") || text.endsWith("町") || text.endsWith("村")
                 if (!isArea) {
-                    LineReplyMessageDto("エリアをもう一度入力してください。\n（例：東京都渋谷区）")
+                    LineReplyMessageDto("エリアをもう一度入力してください📍\n（例：東京都渋谷区）")
                 } else {
                     val next = session.copy(step = Step.WAIT_GENRE, city = text)
                     sessionStore.save(next)
@@ -55,7 +53,7 @@ class ReplyUseCase(
                 val parsed = LineUserOptions.parseGenre(text)
                 if (parsed == null) {
                     LineReplyMessageDto(
-                        text = "もう一度、ジャンルを選択してください。",
+                        text = "もう一度、ジャンルを選択してください🍖🍕🍜",
                         quickReplies = LineUserOptions.GENRE_LABELS.map { it to it }
                     )
                 } else {
@@ -73,7 +71,7 @@ class ReplyUseCase(
                 val parsed = LineUserOptions.parsePrice(text)
                 if (parsed == null) {
                     LineReplyMessageDto(
-                        text = "もう一度、価格帯の目安を選択してください。",
+                        text = "もう一度、価格帯の目安を選択してください💰",
                         quickReplies = LineUserOptions.PRICE_LABELS.map { it to it }
                     )
                 } else {
@@ -91,7 +89,7 @@ class ReplyUseCase(
                 val parsed = LineUserOptions.parseHours(text)
                 if (parsed == null) {
                     LineReplyMessageDto(
-                        text = "もう一度、利用シーンを選んでください。",
+                        text = "もう一度、利用シーンを選んでください☀️🌙",
                         quickReplies = LineUserOptions.HOURS_LABELS.map { it to it }
                     )
                 } else {
@@ -112,13 +110,13 @@ class ReplyUseCase(
 
                     if (results.isEmpty()) {
                         LineReplyMessageDto(
-                            text = "該当がありませんでした。最初から検索しますか？",
+                            text = "ごめんなさい、該当するお店がありませんでした。。",
                         )
                     } else {
                         // テーブル取得時のみcommentあり
                         val lines = results.joinToString("\n") { r ->
-                            val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $it）" } ?: ""
-                            "・${r.name}$memo\n${r.googleMapsUri}"
+                            val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $　）" } ?: ""
+                            "⭐️${r.name}$memo\n${r.googleMapsUri}"
                         }
                         LineReplyMessageDto(
                             text =
