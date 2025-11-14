@@ -34,7 +34,7 @@ object LineUserOptions {
     }
 
     // 利用シーン（営業時間）
-    val HOURS_LABELS = listOf("おまかせ", "モーニング", "ランチ", "ディナー")
+    val HOURS_LABELS = listOf("おまかせ", "モーニングタイム", "ランチタイム", "ディナータイム")
     fun parseHours(input: String): Pair<String, HoursBand?>? = when (input) {
         "おまかせ" -> "おまかせ" to null
         "モーニングタイム" -> "モーニング" to HoursBand.MORNING
