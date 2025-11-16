@@ -32,7 +32,7 @@ class ReplyUseCase(
             )
         }
 
-        // 状態機械：エリア → ジャンル → 価格 → 利用シーン → 検索
+        // 希望エリア → 希望ジャンル → 希望価格 → 利用シーン → 検索（GoogleAPI & DB）
         return when (session.step) {
 
             Step.WAIT_AREA -> {
@@ -40,25 +40,56 @@ class ReplyUseCase(
                 if (!isArea) {
                     LineReplyMessageDto("エリアをもう一度入力してください📍\n（例：東京都渋谷区）")
                 } else {
-                    val next = session.copy(step = Step.WAIT_GENRE, city = text)
+                    val next = session.copy(step = Step.WAIT_GENRE, area = text)
                     sessionStore.save(next)
                     LineReplyMessageDto(
-                        text = "ジャンルを選択してください🍖🍕🍜",
-                        quickReplies = LineUserOptions.GENRE_LABELS.map { it to it }
+                        text = "ジャンル（大項目）を選択してください🍖🍕🍜",
+                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
                     )
                 }
             }
 
             Step.WAIT_GENRE -> {
-                val parsed = LineUserOptions.parseGenre(text)
+                val parsed = LineUserOptions.parseGenreParent(text)
                 if (parsed == null) {
                     LineReplyMessageDto(
-                        text = "もう一度、ジャンルを選択してください🍖🍕🍜",
-                        quickReplies = LineUserOptions.GENRE_LABELS.map { it to it }
+                        text = "もう一度、ジャンル（大項目）を選択してください🍖🍕🍜",
+                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
                     )
                 } else {
-                    val (label, tags) = parsed
-                    val next = session.copy(step = Step.WAIT_PRICE, genreLabel = label, genreTags = tags)
+                    val (label, _) = parsed
+                    val subOptions = LineUserOptions.SUBGENRE_USER_LABELS[label]
+                    if (label == "おまかせ" || subOptions.isNullOrEmpty()) {
+                        val next = session.copy(step = Step.WAIT_PRICE, genreLabel = label, subgenreLabel = null)
+                        sessionStore.save(next)
+                        LineReplyMessageDto(
+                            text = "価格帯の目安を選択してください💰",
+                            quickReplies = LineUserOptions.PRICE_LABELS.map { it to it }
+                        )
+                    } else {
+                        val next = session.copy(step = Step.WAIT_SUBGENRE, genreLabel = label)
+                        sessionStore.save(next)
+                        LineReplyMessageDto(
+                            text = "小項目を選択してください🔎（指定しないも可）",
+                            quickReplies = subOptions.map { it to it }
+                        )
+                    }
+                }
+            }
+
+            Step.WAIT_SUBGENRE -> {
+                val parent = session.genreLabel
+                if (parent == null) {
+                    val back = session.copy(step = Step.WAIT_GENRE)
+                    sessionStore.save(back)
+                    LineReplyMessageDto(
+                        text = "ジャンル（大項目）を選択してください🍖🍕🍜",
+                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
+                    )
+                } else {
+                    val parsed = LineUserOptions.parseSubgenre(parent, text) // null なら「指定しない」
+                    val childLabel = parsed?.first
+                    val next = session.copy(step = Step.WAIT_PRICE, subgenreLabel = childLabel)
                     sessionStore.save(next)
                     LineReplyMessageDto(
                         text = "価格帯の目安を選択してください💰",
@@ -98,10 +129,10 @@ class ReplyUseCase(
                     sessionStore.save(done)
 
                     // ------- Places API 検索 -------
-                    val genreToken = genreTokenForTextSearch(done.genreLabel) // おまかせの場合 null
+                    val genreToken = genreTokenForTextSearch(done.genreLabel, done.subgenreLabel)
                     val results = searchService.search(
-                        area        = done.city!!,
-                        genreToken  = genreToken,
+                        area        = done.area!!,
+                        genreToken  = genreToken,      // 子があれば子トークン優先
                         priceLevels = done.priceLevels,
                         hoursBand   = done.hoursBand,
                         limit       = 5
@@ -109,19 +140,17 @@ class ReplyUseCase(
                     sessionStore.clear(userId)
 
                     if (results.isEmpty()) {
-                        LineReplyMessageDto(
-                            text = "ごめんなさい、該当するお店がありませんでした。。",
-                        )
+                        LineReplyMessageDto(text = "ごめんなさい、該当するお店がありませんでした。。")
                     } else {
-                        // テーブル取得時のみcommentあり
                         val lines = results.joinToString("\n") { r ->
-                            val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $　）" } ?: ""
+                            val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $it）" } ?: ""
                             "⭐️${r.name}$memo\n${r.googleMapsUri}"
                         }
                         LineReplyMessageDto(
                             text =
-                                "おすすめ（${done.city} / ${done.genreLabel ?: "おまかせ"} / " +
-                                        "${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）：\n$lines",
+                                "おすすめ（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
+                                        (done.subgenreLabel?.let { "（$it）" } ?: "") +
+                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）：\n$lines"
                         )
                     }
                 }
@@ -130,31 +159,22 @@ class ReplyUseCase(
     }
 
     /**
-     * TextSearch に足すジャンルキーワードを返す。
-     * 例: 「ラーメン」「カレー」「カフェ」など。おまかせは null を返す。 TODO おまかせパターンと、ジャンルの幅広げる（検索ワード少なく）
+     * ユーザーが入力したジャンル（親、サブ）の文字列結合
      */
-    private val GENRE_WORDS: Map<String, List<String>> = mapOf(
-        "和食系" to listOf("和食"),
-        "洋食系" to listOf("イタリアン"),
-        "アジア・エスニック系" to listOf("中華"),
-        "肉料理・粉物系" to listOf("焼肉"),
-        "カレー" to listOf("カレー"),
-        "スイーツ・カフェ系" to listOf("カフェ"),
-        "居酒屋・バー" to listOf("居酒屋"),
-        "麺類" to listOf("ラーメン")
-//        "和食系" to listOf("和食", "寿司", "天ぷら", "そば", "うどん", "とんかつ", "焼鳥"),
-//        "洋食系" to listOf("イタリアン", "フレンチ", "ビストロ", "ピザ", "パスタ", "ステーキ", "ハンバーガー"),
-//        "アジア・エスニック系" to listOf("中華", "台湾", "タイ", "ベトナム", "韓国", "インド", "ネパール"),
-//        "肉料理・粉物系" to listOf("焼肉", "ステーキ", "ハンバーグ", "シュラスコ", "お好み焼き", "たこ焼き", "もんじゃ"),
-//        "カレー" to listOf("カレー", "スパイスカレー", "インドカレー", "タイカレー"),
-//        "スイーツ・カフェ系" to listOf("カフェ", "喫茶", "珈琲", "パティスリー", "ケーキ", "ジェラート", "ベーカリー"),
-//        "居酒屋・バー" to listOf("居酒屋", "立ち飲み", "ワインバー", "ビアバー", "クラフトビール", "バー"),
-//        "麺類" to listOf("ラーメン", "つけ麺", "油そば", "うどん", "そば", "パスタ", "フォー")
-    )
+    fun genreTokenForTextSearch(genreLabel: String?, subgenreLabel: String?): String? {
+        val parent = genreLabel?.trim().orEmpty()
+        val child  = subgenreLabel?.trim().orEmpty()
 
-    private fun genreTokenForTextSearch(genreLabel: String?): String? {
-        val label = genreLabel?.trim().orEmpty()
-        if (label.isEmpty() || label == "おまかせ") return null
-        return GENRE_WORDS[label]?.joinToString(" ") ?: label
+        if (parent.isEmpty() || parent == "おまかせ") return null
+
+        // 子があれば子優先
+        if (child.isNotEmpty()) {
+            val w = LineUserOptions.SUBGENRE_SEARCH_WORDS[child]
+            return (w ?: listOf(child)).joinToString(" ")
+        }
+
+        // 子が無ければ親
+        val w = LineUserOptions.GENRE_SEARCH_WORDS[parent]
+        return (w ?: listOf(parent)).joinToString(" ")
     }
 }

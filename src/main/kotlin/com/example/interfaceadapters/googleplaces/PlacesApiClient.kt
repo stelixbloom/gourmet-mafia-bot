@@ -66,8 +66,7 @@ class PlacesApiClient(private val apiKey: String) {
             header(
                 // 要件のフィールド
                 "X-Goog-FieldMask",
-                "places.id,places.displayName,places.priceLevel,places.rating," +
-                        "places.googleMapsUri,places.primaryTypeDisplayName,places.regularOpeningHours"
+                "places.id,places.displayName,places.priceLevel,places.rating,places.googleMapsUri,places.primaryTypeDisplayName"
             )
             setBody(
                 mapOf(
