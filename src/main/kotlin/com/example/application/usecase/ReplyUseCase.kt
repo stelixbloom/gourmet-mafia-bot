@@ -31,7 +31,7 @@ class ReplyUseCase(
             session = SearchSession(userId = userId, step = Step.WAIT_AREA)
             sessionStore.save(session)
             return LineReplyMessageDto(
-                text = "検索したいエリアを入力してください。📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）",
+                text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）",
             )
         }
 
@@ -43,13 +43,13 @@ class ReplyUseCase(
                 val res = AreaInput.sanitize(text)
                 if (!res.ok) {
                     LineReplyMessageDto(
-                        text = "もう一度検索したいエリアを入力してください。📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）"
+                        text = "もう一度検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）"
                     )
                 } else {
                     val next = session.copy(step = Step.WAIT_GENRE, area = res.value)
                     sessionStore.save(next)
                     LineReplyMessageDto(
-                        text = "希望ジャンル（大項目）を選択してください🍖🍕🍜",
+                        text = "希望ジャンル（大項目）を選択してください🔎",
                         quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
                     )
                 }
@@ -60,7 +60,7 @@ class ReplyUseCase(
                 val parsed = LineUserOptions.parseGenreParent(text)
                 if (parsed == null) {
                     LineReplyMessageDto(
-                        text = "もう一度、ジャンル（大項目）を選択してください🍖🍕🍜",
+                        text = "もう一度、希望ジャンル（大項目）を選択してください🔎",
                         quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
                     )
                 } else {
@@ -77,7 +77,7 @@ class ReplyUseCase(
                         val next = session.copy(step = Step.WAIT_SUBGENRE, genreLabel = label)
                         sessionStore.save(next)
                         LineReplyMessageDto(
-                            text = "小項目を選択してください🔎（指定しないも可）",
+                            text = "希望ジャンル（小項目）を選択してください🍖🍕🍜",
                             quickReplies = subOptions.map { it to it }
                         )
                     }
@@ -91,7 +91,7 @@ class ReplyUseCase(
                     val back = session.copy(step = Step.WAIT_GENRE)
                     sessionStore.save(back)
                     LineReplyMessageDto(
-                        text = "希望ジャンル（小項目）を選択してください🍖🍕🍜",
+                        text = "もう一度、希望ジャンル（小項目）を選択してください🍖🍕🍜",
                         quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
                     )
                 } else {
@@ -142,7 +142,7 @@ class ReplyUseCase(
                     val genreToken = genreTokenForTextSearch(done.genreLabel, done.subgenreLabel)
                     val results = searchService.search(
                         area        = done.area!!,
-                        genreToken  = genreToken,      // 子があれば子トークン優先
+                        genreToken  = genreToken,      // サブがあればサブトークン優先
                         priceLevels = done.priceLevels,
                         hoursBand   = done.hoursBand,
                         limit       = 5
@@ -150,7 +150,7 @@ class ReplyUseCase(
                     sessionStore.clear(userId)
 
                     if (results.isEmpty()) {
-                        LineReplyMessageDto(text = "該当するお店がありませんでした。。\nもう一度検索してください。")
+                        LineReplyMessageDto(text = "該当するお店がありませんでした。。\nもう一度検索してください😢")
                     } else {
                         val lines = results.joinToString("\n") { r ->
                             val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $it）" } ?: ""
@@ -181,13 +181,13 @@ class ReplyUseCase(
 
         if (parent.isEmpty() || parent == "おまかせ") return null
 
-        // 子があれば子優先
+        // サブがあればサブ優先
         if (child.isNotEmpty()) {
             val w = LineUserOptions.SUBGENRE_SEARCH_WORDS[child]
             return (w ?: listOf(child)).joinToString(" ")
         }
 
-        // 子が無ければ親
+        // サブが無ければ親
         val w = LineUserOptions.GENRE_SEARCH_WORDS[parent]
         return (w ?: listOf(parent)).joinToString(" ")
     }
