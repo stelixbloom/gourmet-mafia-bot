@@ -150,7 +150,7 @@ class ReplyUseCase(
                     sessionStore.clear(userId)
 
                     if (results.isEmpty()) {
-                        LineReplyMessageDto(text = "該当するお店がありませんでした。。\nもう一度検索してください😢")
+                        LineReplyMessageDto(text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢")
                     } else {
                         val lines = results.joinToString("\n") { r ->
                             val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $it）" } ?: ""
