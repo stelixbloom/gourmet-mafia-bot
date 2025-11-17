@@ -11,7 +11,11 @@ class PlaceRepository : PlaceQueryPort {
         if (ids.isEmpty()) return@transaction emptyMap()
         PlaceTable
             .slice(PlaceTable.id, PlaceTable.comment)
-            .select { (PlaceTable.id inList ids) and (PlaceTable.defectFlag eq 0.toShort()) }
+            .select {
+                (PlaceTable.id inList ids) and
+                        (PlaceTable.defectFlag eq 0.toShort()) and
+                        (PlaceTable.rating greaterEq 3.7.toBigDecimal())
+            }
             .associate { it[PlaceTable.id] to it[PlaceTable.comment] }
     }
 }
