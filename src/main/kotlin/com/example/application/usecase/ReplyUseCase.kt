@@ -150,26 +150,33 @@ class ReplyUseCase(
                     sessionStore.clear(userId)
 
                     if (results.isEmpty()) {
-                        LineReplyMessageDto(text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢")
+                        LineReplyMessageDto(
+                            text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢"
+                        )
                     } else {
-                        val lines = results.joinToString("\n") { r ->
-                            val head = if (r.recommended) {
-                                "【グルメマフィアおすすめ】"
-                            } else {
-                                ""
+                        val sb = StringBuilder()
+                        for (r in results) {
+                            // 1行目: 店名
+                            sb.append("⭐️").append(r.name).append('\n')
+
+                            // 2行目以降: 情報ブロック（店名とURLの“間”に入れる）
+                            // 同じ見出し幅で揃える（おすすめ/メモ）
+                            if (r.recommended) {
+                                sb.append("   おすすめ: ").append("🍴グルメマフィア イチオシのお店😎✨\\n")
                             }
-                            val memo = if (r.comment != null && r.comment.isNotBlank()) {
-                                "（メモ: ${r.comment}）"
-                            } else {
-                                ""
+                            if (!r.comment.isNullOrBlank()) {
+                                sb.append("   メモ　　: ").append(r.comment).append('\n')
                             }
-                            head + "⭐️" + r.name + memo + "\n" + r.googleMapsUri
+
+                            // 最後にURL
+                            sb.append(r.googleMapsUri).append('\n').append('\n')
                         }
                         LineReplyMessageDto(
                             text =
                                 "おすすめ（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
                                         (done.subgenreLabel?.let { "（$it）" } ?: "") +
-                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）：\n$lines"
+                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）：\n" +
+                                        sb.toString().trimEnd()
                         )
                     }
                 }
