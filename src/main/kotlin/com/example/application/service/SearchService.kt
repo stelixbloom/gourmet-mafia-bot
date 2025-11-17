@@ -19,29 +19,25 @@ class SearchService(
         genreToken: String?,
         priceLevels: Set<Int>?,
         hoursBand: HoursBand?,
-        limit: Int = 5
+        limit: Int = 3
     ): List<SearchResult> {
 
-        // テキストクエリ作成
         val query = placesClient.buildQuery(area = area, genreToken = genreToken, hoursBand = hoursBand)
-
-        // PlacesAPIテキスト検索
         val candidates = placesClient.textSearch(query)
-
-        // 価格帯フィルタ（priceLevelが無い店も対象）
         val filtered = candidates.filter { matchesPrice(priceLevels, it.priceLevel) }
-
         if (filtered.isEmpty()) return emptyList()
 
-        // テーブルからで有効IDを取得（comment付き）
         val ids = filtered.map { it.id }
-        val commentsById = repository.findActiveCommentsByIds(ids) // Map<id, comment?>
+        // DB検索
+        val commentsById = repository.findActiveCommentsByIds(ids)
 
-        // DBにある店を優先、無い店も空きがあれば混ぜる
         val (inDb, notInDb) = filtered.partition { commentsById.containsKey(it.id) }
 
-        // API項目で返す（URLはgoogleMapsUri、なければplaceidでURL作成）
-        fun toResult(c: PlaceCandidate, comment: String?): SearchResult =
+        fun ensureMapsUrl(name: String, id: String, uri: String?): String =
+            uri ?: "https://maps.google.com/?q=${name}&cid=${id}"
+
+        // API項目で返す
+        fun toResult(c: PlaceCandidate, comment: String?, recommended: Boolean): SearchResult =
             SearchResult(
                 id = c.id,
                 name = c.name,
@@ -49,13 +45,14 @@ class SearchService(
                 priceLevel = c.priceLevel,
                 rating = c.rating,
                 primaryTypeDisplayName = c.primaryTypeDisplayName,
-                comment = comment
+                comment = comment,
+                recommended = recommended
             )
 
         val prioritized = buildList {
-            inDb.forEach { add(toResult(it, commentsById[it.id])) }
+            inDb.forEach { add(toResult(it, commentsById[it.id], true)) } // DBから取得
             if (size < limit) {
-                notInDb.forEach { add(toResult(it, null)) }
+                notInDb.forEach { add(toResult(it, null, false)) } // APIから取得
             }
         }
 

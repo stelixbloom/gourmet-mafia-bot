@@ -145,7 +145,7 @@ class ReplyUseCase(
                         genreToken  = genreToken,      // サブがあればサブトークン優先
                         priceLevels = done.priceLevels,
                         hoursBand   = done.hoursBand,
-                        limit       = 5
+                        limit       = 3
                     )
                     sessionStore.clear(userId)
 
@@ -153,8 +153,17 @@ class ReplyUseCase(
                         LineReplyMessageDto(text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢")
                     } else {
                         val lines = results.joinToString("\n") { r ->
-                            val memo = r.comment?.takeIf { it.isNotBlank() }?.let { "（メモ: $it）" } ?: ""
-                            "⭐️${r.name}$memo\n${r.googleMapsUri}"
+                            val head = if (r.recommended) {
+                                "【グルメマフィアおすすめ】"
+                            } else {
+                                ""
+                            }
+                            val memo = if (r.comment != null && r.comment.isNotBlank()) {
+                                "（メモ: ${r.comment}）"
+                            } else {
+                                ""
+                            }
+                            head + "⭐️" + r.name + memo + "\n" + r.googleMapsUri
                         }
                         LineReplyMessageDto(
                             text =

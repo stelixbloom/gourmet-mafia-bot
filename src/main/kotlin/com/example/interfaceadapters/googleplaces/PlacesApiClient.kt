@@ -12,8 +12,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.net.URLEncoder
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 /**
  * Google Places Text Search (New) クライアント。
@@ -36,20 +34,6 @@ class PlacesApiClient(private val apiKey: String) {
             genreToken?.trim()?.ifBlank { null },
             hoursBand?.jpWord
         ).joinToString(" ")
-
-//    fun buildQuery(area: String, genreToken: String?, hoursBand: HoursBand?): String =
-//        listOfNotNull(
-//            area.trim().ifBlank { null },
-//            genreToken?.trim()?.ifBlank { null },
-//            hoursBand?.let { HOURS_JP[it] }
-//        ).joinToString(" ")
-
-//    fun buildQuery(area: String, genreToken: String?, hoursBand: HoursBand?): String =
-//        listOfNotNull(
-//            area.trim().ifBlank { null },
-//            genreToken?.trim()?.ifBlank { null },
-//            hoursBand?.jpWord
-//        ).joinToString(" ")
 
     /**
      * Text Search 実行。
@@ -80,20 +64,6 @@ class PlacesApiClient(private val apiKey: String) {
         return (resp.places ?: emptyList()).map { it.toCandidate() }
     }
 }
-
-//private val HOURS_JP = mapOf(
-//    HoursBand.MORNING to "モーニング",
-//    HoursBand.LUNCH   to "ランチ",
-//    HoursBand.DINNER  to "ディナー"
-//)
-//
-///* ===== 利用シーン（クエリ用の日本語ワードも持たせる） ===== */
-//
-//enum class HoursBand(val jpWord: String) {
-//    MORNING("モーニング"),
-//    LUNCH("ランチ"),
-//    DINNER("ディナー")
-//}
 
 /* ===== アプリで使いやすい返却モデル ===== */
 
