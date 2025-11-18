@@ -1,9 +1,18 @@
 package com.example.application.dto
 
+import kotlinx.serialization.json.JsonElement
+
 /**
  * LINEへの返信フォーマット
  */
-data class LineReplyMessageDto(
+sealed interface LineReplyMessageDto
+
+data class TextReplyMessageDto(
     val text: String,
-    val quickReplies: List<Pair<String, String>>? = null // (label, text to send)
-)
+    val quickReplies: List<Pair<String, String>>? = null
+) : LineReplyMessageDto
+
+data class FlexReplyMessageDto(
+    val altText: String,
+    val contents: JsonElement
+) : LineReplyMessageDto

@@ -1,11 +1,13 @@
 package com.example.application.usecase
 
 import com.example.application.dto.LineReplyMessageDto
+import com.example.application.dto.TextReplyMessageDto
 import com.example.application.service.SearchService
 import com.example.application.session.SearchSession
 import com.example.application.session.SessionStore
 import com.example.application.session.Step
 import com.example.interfaceadapters.line.AreaInput
+import com.example.interfaceadapters.line.FlexTemplates
 
 /**
  * 受け取ったテキストに応じて返信内容を決めるUseCaseクラス
@@ -21,7 +23,7 @@ class ReplyUseCase(
 
         if (text == "問い合わせ") {
             sessionStore.clear(userId)
-            return LineReplyMessageDto(
+            return TextReplyMessageDto(
                 text = "こちらのメールアドレスへご連絡ください✉️\n「メールアドレス」",
             )
         }
@@ -30,7 +32,7 @@ class ReplyUseCase(
         if (text == "検索開始" || text == "検索" || session == null) {
             session = SearchSession(userId = userId, step = Step.WAIT_AREA)
             sessionStore.save(session)
-            return LineReplyMessageDto(
+            return TextReplyMessageDto(
                 text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）",
             )
         }
@@ -42,16 +44,13 @@ class ReplyUseCase(
             Step.WAIT_AREA -> {
                 val res = AreaInput.sanitize(text)
                 if (!res.ok) {
-                    LineReplyMessageDto(
+                    TextReplyMessageDto(
                         text = "もう一度検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）"
                     )
                 } else {
                     val next = session.copy(step = Step.WAIT_GENRE, area = res.value)
                     sessionStore.save(next)
-                    LineReplyMessageDto(
-                        text = "希望ジャンル（大項目）を選択してください🔎",
-                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
-                    )
+                    FlexTemplates.genreParent()
                 }
             }
 
@@ -59,27 +58,19 @@ class ReplyUseCase(
             Step.WAIT_GENRE -> {
                 val parsed = LineUserOptions.parseGenreParent(text)
                 if (parsed == null) {
-                    LineReplyMessageDto(
-                        text = "もう一度、希望ジャンル（大項目）を選択してください🔎",
-                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
-                    )
+                    // 入力ミス → もう一度同じFlexを出す
+                    FlexTemplates.genreParent()
                 } else {
                     val (label, _) = parsed
                     val subOptions = LineUserOptions.SUBGENRE_USER_LABELS[label]
                     if (label == "おまかせ" || subOptions.isNullOrEmpty()) {
                         val next = session.copy(step = Step.WAIT_PRICE, genreLabel = label, subgenreLabel = null)
                         sessionStore.save(next)
-                        LineReplyMessageDto(
-                            text = "価格帯の目安を選択してください💰",
-                            quickReplies = LineUserOptions.PRICE_LABELS.map { it to it }
-                        )
+                        FlexTemplates.price()
                     } else {
                         val next = session.copy(step = Step.WAIT_SUBGENRE, genreLabel = label)
                         sessionStore.save(next)
-                        LineReplyMessageDto(
-                            text = "希望ジャンル（小項目）を選択してください🍖🍕🍜",
-                            quickReplies = subOptions.map { it to it }
-                        )
+                        FlexTemplates.genreSub(label, subOptions)
                     }
                 }
             }
@@ -90,19 +81,13 @@ class ReplyUseCase(
                 if (parent == null) {
                     val back = session.copy(step = Step.WAIT_GENRE)
                     sessionStore.save(back)
-                    LineReplyMessageDto(
-                        text = "もう一度、希望ジャンル（小項目）を選択してください🍖🍕🍜",
-                        quickReplies = LineUserOptions.GENRE_USER_LABELS.map { it to it }
-                    )
+                    FlexTemplates.genreParent()
                 } else {
                     val parsed = LineUserOptions.parseSubgenre(parent, text) // null なら「指定しない」
                     val childLabel = parsed?.first
                     val next = session.copy(step = Step.WAIT_PRICE, subgenreLabel = childLabel)
                     sessionStore.save(next)
-                    LineReplyMessageDto(
-                        text = "価格帯の目安を選択してください💰",
-                        quickReplies = LineUserOptions.PRICE_LABELS.map { it to it }
-                    )
+                    FlexTemplates.price()
                 }
             }
 
@@ -110,18 +95,12 @@ class ReplyUseCase(
             Step.WAIT_PRICE -> {
                 val parsed = LineUserOptions.parsePrice(text)
                 if (parsed == null) {
-                    LineReplyMessageDto(
-                        text = "もう一度、価格帯の目安を選択してください💰",
-                        quickReplies = LineUserOptions.PRICE_LABELS.map { it to it }
-                    )
+                    FlexTemplates.price()
                 } else {
                     val (label, levels) = parsed
                     val next = session.copy(step = Step.WAIT_HOURS, priceLabel = label, priceLevels = levels)
                     sessionStore.save(next)
-                    LineReplyMessageDto(
-                        text = "利用シーンを選択してください☀️🌙",
-                        quickReplies = LineUserOptions.HOURS_LABELS.map { it to it }
-                    )
+                    FlexTemplates.hours()
                 }
             }
 
@@ -129,10 +108,7 @@ class ReplyUseCase(
             Step.WAIT_HOURS -> {
                 val parsed = LineUserOptions.parseHours(text)
                 if (parsed == null) {
-                    LineReplyMessageDto(
-                        text = "もう一度、利用シーンを選んでください☀️🌙",
-                        quickReplies = LineUserOptions.HOURS_LABELS.map { it to it }
-                    )
+                    FlexTemplates.hours()
                 } else {
                     val (label, band) = parsed
                     val done = session.copy(hoursLabel = label, hoursBand = band)
@@ -150,7 +126,7 @@ class ReplyUseCase(
                     sessionStore.clear(userId)
 
                     if (results.isEmpty()) {
-                        LineReplyMessageDto(
+                        TextReplyMessageDto(
                             text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢"
                         )
                     } else {
@@ -171,7 +147,7 @@ class ReplyUseCase(
                             // 最後にURL
                             sb.append(r.googleMapsUri).append('\n').append('\n')
                         }
-                        LineReplyMessageDto(
+                        TextReplyMessageDto(
                             text =
                                 "おすすめ（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
                                         (done.subgenreLabel?.let { "（$it）" } ?: "") +

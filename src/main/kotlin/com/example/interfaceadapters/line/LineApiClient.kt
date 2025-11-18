@@ -95,17 +95,6 @@ class LineApiClient(private val channelAccessToken: String) {
                 })
             )
 
-//        val response = client.post("https://api.line.me/v2/bot/message/reply") {
-//            header(HttpHeaders.Authorization, "Bearer $channelAccessToken")
-//            contentType(ContentType.Application.Json)
-//            setBody(ReplyBody(replyToken, listOf(msg)))
-//        }
-//        // ステータスコードが200系以外なら、LINE APIエラーとして例外を投げる
-//        if (!response.status.isSuccess()) {
-//            val body = response.body<String>()
-//            error("LINE reply failed: ${response.status} $body")
-//        }
-
         val requestBody = ReplyBody(replyToken, listOf(msg))
 
         logger.info("Sending LINE reply: ${Json.encodeToString(requestBody)}")
