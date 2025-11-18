@@ -58,7 +58,7 @@ object FlexTemplates {
             altText = "希望ジャンル（大項目）を選択してください🔎",
             contents = buttonsBubble(
                 title = "何が食べたいですか？🍽",
-                subtitle = "希望ジャンル（大項目）を選択してください🔎",
+                subtitle = "おおまかなジャンルを選択してください🔎",
                 labels = LineUserOptions.GENRE_USER_LABELS
             )
         )
@@ -67,7 +67,7 @@ object FlexTemplates {
         FlexReplyMessageDto(
             altText = "希望ジャンル（小項目）を選択してください🍖🍕🍜",
             contents = buttonsBubble(
-                title = "ジャンル（小項目）: $parent",
+                title = "$parent：",
                 subtitle = "お好みのカテゴリを選択してください🍖🍕🍜",
                 labels = labels
             )

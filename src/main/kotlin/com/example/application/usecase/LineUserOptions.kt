@@ -6,7 +6,6 @@ object LineUserOptions {
 
     // 親ジャンル
     val GENRE_USER_LABELS = listOf(
-        "おまかせ",
         "和食",
         "洋食・フレンチ・イタリアン",
         "中華・アジアエスニック",
