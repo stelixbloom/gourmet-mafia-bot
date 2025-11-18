@@ -43,7 +43,7 @@ object FlexTemplates {
                                 putJsonObject("action") {
                                     put("type", "message")
                                     put("label", label)
-                                    put("text", label)   // 押したらそのままテキストとして返ってくる
+                                    put("text", label)
                                 }
                             }
                         }

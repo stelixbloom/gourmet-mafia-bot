@@ -1,5 +1,7 @@
 package com.example.interfaceadapters.line
 
+import com.example.application.dto.FlexReplyMessageDto
+import com.example.application.dto.TextReplyMessageDto
 import com.example.application.usecase.ReplyUseCase
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -48,7 +50,22 @@ class LineWebhookController(
             val userId = source["userId"]?.jsonPrimitive?.content ?: continue
 
             val reply = replyUseCase.execute(userId, text)
-            lineClient.replyText(replyToken, reply.text, reply.quickReplies)
+            when (reply) {
+                is TextReplyMessageDto -> {
+                    lineClient.replyText(
+                        replyToken = replyToken,
+                        text = reply.text,
+                        quick = reply.quickReplies
+                    )
+                }
+                is FlexReplyMessageDto -> {
+                    lineClient.replyFlex(
+                        replyToken = replyToken,
+                        altText = reply.altText,
+                        contents = reply.contents
+                    )
+                }
+            }
         }
         call.respond(HttpStatusCode.OK)
     }

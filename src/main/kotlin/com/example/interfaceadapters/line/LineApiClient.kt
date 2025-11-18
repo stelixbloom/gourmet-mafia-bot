@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonClassDiscriminator
+import kotlinx.serialization.json.JsonElement
 import org.slf4j.LoggerFactory
 
 //「LINEに送るメッセージ」の基本的型。TextMsg や TextWithQuick など、異なる形式のメッセージを統一的に扱うためのベース
@@ -56,6 +57,14 @@ data class TextWithQuick(
     val quickReply: QuickReply? = null
 ): LineMessage
 
+@Serializable
+@SerialName("flex")
+data class FlexMsg(
+    val type: String = "flex",
+    val altText: String,
+    val contents: JsonElement
+) : LineMessage
+
 // API に送信するリクエスト全体のJSON構造。「replyToken」はLINEがWebhookで送ってくる「返信対象トーク」の識別子
 @Serializable
 data class ReplyBody(
@@ -98,6 +107,34 @@ class LineApiClient(private val channelAccessToken: String) {
         val requestBody = ReplyBody(replyToken, listOf(msg))
 
         logger.info("Sending LINE reply: ${Json.encodeToString(requestBody)}")
+
+        val response = client.post("https://api.line.me/v2/bot/message/reply") {
+            header(HttpHeaders.Authorization, "Bearer $channelAccessToken")
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }
+
+        val responseText = response.bodyAsText()
+        logger.info("LINE API response: [${response.status}] $responseText")
+
+        if (!response.status.isSuccess()) {
+            error("LINE reply failed: ${response.status} $responseText")
+        }
+    }
+
+    suspend fun replyFlex(
+        replyToken: String,
+        altText: String,
+        contents: JsonElement
+    ) {
+        val msg: LineMessage = FlexMsg(
+            altText = altText,
+            contents = contents
+        )
+
+        val requestBody = ReplyBody(replyToken, listOf(msg))
+
+        logger.info("Sending LINE reply (flex): ${Json.encodeToString(requestBody)}")
 
         val response = client.post("https://api.line.me/v2/bot/message/reply") {
             header(HttpHeaders.Authorization, "Bearer $channelAccessToken")
