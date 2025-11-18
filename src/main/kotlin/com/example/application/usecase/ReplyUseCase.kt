@@ -149,9 +149,9 @@ class ReplyUseCase(
                         }
                         TextReplyMessageDto(
                             text =
-                                "検索ワード\n（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
+                                "検索ワード（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
                                         (done.subgenreLabel?.let { "（$it）" } ?: "") +
-                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）\nおすすめのお店はこちら！✨\n" +
+                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）\n\nおすすめのお店はこちら！✨\n\n" +
                                         sb.toString().trimEnd()
                         )
                     }
