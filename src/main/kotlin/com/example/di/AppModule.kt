@@ -32,7 +32,7 @@ val appModule = module {
     single<MonthlyQuotaService> {
         RedisMonthlyQuotaService(
             redis = get(),   // JedisPooled
-            limit = 300
+            limit = 3
         )
     }
 
