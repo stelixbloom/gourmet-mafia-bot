@@ -6,14 +6,15 @@ interface MonthlyQuotaService {
 
     /**
      * 今月の残りがあるかだけ判定（カウントは増やさない）
-     * true = まだ検索してOK
-     * false = 上限到達
+     * true：まだ検索してOK
+     * false：上限到達
      */
     fun hasRemaining(key: String, now: LocalDateTime = LocalDateTime.now()): Boolean
 
     /**
      * カウントを1消費する。
-     * 消費できたら true、上限なら false。
+     * true：1消費
+     * false：上限
      */
     fun tryConsume(key: String, now: LocalDateTime = LocalDateTime.now()): Boolean
 }

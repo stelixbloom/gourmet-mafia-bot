@@ -21,6 +21,7 @@ class RedisMonthlyQuotaService(
         val ym = YearMonth.from(now)
         val redisKey = counterKey(key, ym)
         val used = redis.get(redisKey)?.toIntOrNull() ?: 0
+        println("hasRemaining key=$redisKey used=$used limit=$limit")
         return used < limit
     }
 
@@ -39,6 +40,7 @@ class RedisMonthlyQuotaService(
             redis.expire(redisKey, 60 * 60 * 24 * 40)
         }
 
+        println("tryConsume key=$redisKey used=$used limit=$limit")
         return used <= limit
     }
 }

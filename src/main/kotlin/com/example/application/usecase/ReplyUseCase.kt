@@ -33,7 +33,7 @@ class ReplyUseCase(
         var session = sessionStore.get(userId)
         if (text == "検索開始" || text == "検索" || session == null) {
 
-            // API上限チェック：チェック
+            // APIリクエスト上限チェック：チェック
             val key = "user:$userId"
             if (!quotaService.hasRemaining(key)) {
                 sessionStore.clear(userId)
@@ -126,7 +126,7 @@ class ReplyUseCase(
                     val done = session.copy(hoursLabel = label, hoursBand = band)
                     sessionStore.save(done)
 
-                    // API上限チェック：カウント
+                    // APIリクエスト上限チェック：カウント
                     val key = "user:$userId"
                     if (!quotaService.tryConsume(key)) {
                         sessionStore.clear(userId)
