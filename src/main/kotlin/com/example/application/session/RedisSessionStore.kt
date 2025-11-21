@@ -4,8 +4,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import redis.clients.jedis.JedisPooled
 
-class  RedisSessionStore(redisUrl: String): SessionStore {
-    private val client = JedisPooled(redisUrl)
+class RedisSessionStore(
+    private val client: JedisPooled
+) : SessionStore {
 
     private fun key(id: String) = "session:$id"
 

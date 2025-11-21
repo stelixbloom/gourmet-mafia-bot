@@ -2,6 +2,7 @@ package com.example.application.usecase
 
 import com.example.application.dto.LineReplyMessageDto
 import com.example.application.dto.TextReplyMessageDto
+import com.example.application.service.MonthlyQuotaService
 import com.example.application.service.SearchService
 import com.example.application.session.SearchSession
 import com.example.application.session.SessionStore
@@ -14,7 +15,8 @@ import com.example.interfaceadapters.line.FlexTemplates
  */
 class ReplyUseCase(
     private val searchService: SearchService,
-    private val sessionStore: SessionStore
+    private val sessionStore: SessionStore,
+    private val quotaService: MonthlyQuotaService
 ) {
     suspend fun execute(userId: String, textRaw: String): LineReplyMessageDto {
         val text = textRaw.trim()
@@ -30,6 +32,16 @@ class ReplyUseCase(
 
         var session = sessionStore.get(userId)
         if (text == "検索開始" || text == "検索" || session == null) {
+
+            // API上限チェック：チェック
+            val key = "user:$userId"
+            if (!quotaService.hasRemaining(key)) {
+                sessionStore.clear(userId)
+                return TextReplyMessageDto(
+                    text = "ごめんなさい🙏\n今月の検索回数が上限（300件）に達しました。\n翌月以降にまたご利用ください。"
+                )
+            }
+
             session = SearchSession(userId = userId, step = Step.WAIT_AREA)
             sessionStore.save(session)
             return TextReplyMessageDto(
@@ -113,6 +125,15 @@ class ReplyUseCase(
                     val (label, band) = parsed
                     val done = session.copy(hoursLabel = label, hoursBand = band)
                     sessionStore.save(done)
+
+                    // API上限チェック：カウント
+                    val key = "user:$userId"
+                    if (!quotaService.tryConsume(key)) {
+                        sessionStore.clear(userId)
+                        return TextReplyMessageDto(
+                            text = "ごめんなさい🙏\n今月の検索回数が上限（300件）に達しました。\n翌月以降にまたご利用ください。"
+                        )
+                    }
 
                     // ------- Places API 検索 -------
                     val genreToken = genreTokenForTextSearch(done.genreLabel, done.subgenreLabel)
