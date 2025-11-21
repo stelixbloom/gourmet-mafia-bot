@@ -1,5 +1,7 @@
 package com.example.di
 
+import com.example.application.service.MonthlyQuotaService
+import com.example.application.service.RedisMonthlyQuotaService
 import com.example.application.service.SearchService
 import com.example.application.usecase.ReplyUseCase
 import com.example.config.AppConfig
@@ -16,9 +18,22 @@ import redis.clients.jedis.JedisPooled
 
 val appModule = module {
 
-    // Redis クライアントを全体で共有
+    // Redisクライアント（共通）
     single {
         JedisPooled(AppConfig.redisUrl)
+    }
+
+    // Session
+    single<SessionStore> {
+        RedisSessionStore(get())  // JedisPooledを一度だけ定義
+    }
+
+    // 月間クオータ（ユーザー単位 / 月300回）
+    single<MonthlyQuotaService> {
+        RedisMonthlyQuotaService(
+            redis = get(),   // JedisPooled
+            limit = 300
+        )
     }
 
     // Repositories
@@ -28,16 +43,30 @@ val appModule = module {
     single { PlacesApiClient(AppConfig.googleApiKey) }
     single { LineApiClient(AppConfig.channelAccessToken) }
 
-    // SessionStore（Redis 版）
-    single<SessionStore> {
-        RedisSessionStore(get())   // get() = JedisPooled
+    // Services
+    single {
+        SearchService(
+            placesClient = get(),
+            repository = get()
+        )
     }
 
-    // UseCases / Services
-    single { SearchService(get(), get()) }  // PlacesApiClient + PlaceQueryPort
-    single { ReplyUseCase(get(), get(), get()) }   // PlaceQueryPort + MonthlyQuotaService + SessionStore
+    // UseCase
+    single {
+        ReplyUseCase(
+            searchService = get(),
+            sessionStore = get(),
+            quotaService = get()
+        )
+    }
 
     // LINE
     single { LineSignatureVerifier(AppConfig.channelSecret) }
-    single { LineWebhookController(get(), get(), get()) } // verifier, useCase, lineClient
+    single {
+        LineWebhookController(
+            verifier = get(),
+            replyUseCase = get(),
+            lineClient = get()
+        )
+    }
 }
