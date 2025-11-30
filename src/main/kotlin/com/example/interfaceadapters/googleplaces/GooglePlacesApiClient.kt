@@ -11,15 +11,16 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.net.URLEncoder
+import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * Google Places Text Search (New) クライアント。
- * FieldMask で必要項目だけ取得。
- *
- * 依存: ktor-client-cio, ktor-serialization-kotlinx-json
+ * FieldMask で必要な項目だけ取得。
  */
-class PlacesApiClient(private val apiKey: String) {
+class GooglePlacesApiClient(private val apiKey: String) {
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
@@ -32,7 +33,7 @@ class PlacesApiClient(private val apiKey: String) {
         listOfNotNull(
             area.trim().ifBlank { null },
             genreToken?.trim()?.ifBlank { null },
-            hoursBand?.jpWord
+            hoursBand?.hoursSearchWord
         ).joinToString(" ")
 
     /**
@@ -48,9 +49,8 @@ class PlacesApiClient(private val apiKey: String) {
             contentType(ContentType.Application.Json)
             header("X-Goog-Api-Key", apiKey)
             header(
-                // 要件のフィールド
                 "X-Goog-FieldMask",
-                "places.id,places.displayName,places.priceLevel,places.rating,places.googleMapsUri,places.primaryTypeDisplayName"
+                "places.id,places.displayName,places.priceLevel,places.rating,places.googleMapsUri,places.primaryTypeDisplayName,places.regularOpeningHours.periods,places.regularOpeningHours.weekdayDescriptions"
             )
             setBody(
                 mapOf(
@@ -65,8 +65,9 @@ class PlacesApiClient(private val apiKey: String) {
     }
 }
 
-/* ===== アプリで使いやすい返却モデル ===== */
-
+/**
+ * GooglePlacesAPIのレスポンスクラス
+ */
 data class PlaceCandidate(
     val id: String,                         // "places/ChIJ..."（Place ID）
     val name: String,                       // 表示名
@@ -77,9 +78,11 @@ data class PlaceCandidate(
     val openingHours: OpeningHoursInfo?     // 営業時間（あれば）
 )
 
-/* ===== 営業時間情報 ===== */
-
+/**
+ * 営業時間情報
+ */
 data class OpeningHoursInfo(val periods: List<OpeningPeriod>)
+
 data class OpeningPeriod(
     val openDay: Int,   // 0=Sun .. 6=Sat
     val openHour: Int,
@@ -89,8 +92,9 @@ data class OpeningPeriod(
     val closeMinute: Int?
 )
 
-/* ====== Google API DTO ====== */
-
+/**
+ * Google API DTO
+ */
 @Serializable
 private data class TextSearchResponse(val places: List<GooglePlaceInfo>? = null)
 
@@ -153,17 +157,87 @@ private enum class PriceLevel {
     }
 }
 
-/* ===== クライアント側フィルタ（要件：priceLevel一致 or priceLevelが無い店は通す） ===== */
-
+/**
+ * クライアント側フィルタ（要件：priceLevel一致 or priceLevelが無い店は通す）
+ */
 fun matchesPrice(userLevels: Set<Int>?, apiPriceLevel: Int?): Boolean {
     if (userLevels == null) return true        // おまかせ
     return (apiPriceLevel == null) || userLevels.contains(apiPriceLevel)
 }
 
-/* URL フォールバック（googleMapsUri が無い場合に生成） */
-fun ensureMapsUrl(name: String, placeId: String, googleMapsUri: String?): String {
-    if (!googleMapsUri.isNullOrBlank()) return googleMapsUri
-    val q = URLEncoder.encode(name, Charsets.UTF_8)
-    val pid = URLEncoder.encode(placeId, Charsets.UTF_8)
-    return "https://www.google.com/maps/search/?api=1&query=$q&query_place_id=$pid"
+
+private const val MINUTES_PER_DAY = 24 * 60
+private const val MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY
+
+/**
+ * Googleの day(0=Sun..6=Sat) + 時刻 から
+ * "週の先頭からの分数" に変換
+ */
+private fun toWeekMinutes(day: Int, hour: Int, minute: Int): Int {
+    return day * MINUTES_PER_DAY + hour * 60 + minute
 }
+
+/**
+ * OpeningHoursInfo が、指定の曜日・時刻で営業中かどうか
+ */
+fun OpeningHoursInfo.isOpenAt(dayOfWeek: DayOfWeek, time: LocalTime): Boolean {
+    // DayOfWeek.MONDAY.value = 1 ... SUNDAY = 7
+    // Google: 0=Sun..6=Sat なので %7 で合わせる
+    val googleDay = dayOfWeek.value % 7
+    val target = toWeekMinutes(googleDay, time.hour, time.minute)
+
+    return periods.any { p ->
+        val openDay = p.openDay
+        val closeDay = p.closeDay ?: openDay
+        val open = toWeekMinutes(openDay, p.openHour, p.openMinute)
+        val close = if (p.closeHour != null && p.closeMinute != null) {
+            toWeekMinutes(closeDay, p.closeHour, p.closeMinute)
+        } else {
+            // close が無い店はとりあえず24時間営業扱いにするならこれでもいいし、
+            // 除外したいなら false を返す実装に変えてもいい
+            toWeekMinutes(closeDay, 23, 59)
+        }
+
+        var start = open
+        var end = close
+
+        // 日またぎ（open > close）の場合は週末をまたいで補正
+        if (end <= start) {
+            end += MINUTES_PER_WEEK
+        }
+
+        // target も週またぎ考慮して2パターンで判定
+        val t1 = target
+        val t2 = target + MINUTES_PER_WEEK
+
+        (t1 in start until end) || (t2 in start until end)
+    }
+}
+
+/**
+ * hoursBand の条件を満たすかどうか
+ * - hoursBand == null → フィルタしない（true）
+ * - openingHours == null → 今は通す方針（priceLevelと同じノリ）
+ */
+fun matchesHoursBand(
+    hoursBand: HoursBand?,
+    openingHours: OpeningHoursInfo?,
+    now: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"))
+): Boolean {
+    if (hoursBand == null) return true
+    if (openingHours == null) return true  // 厳しくしたければ false に変える
+
+    val day = now.dayOfWeek
+
+    val targetTimes: List<LocalTime> = when (hoursBand) {
+        HoursBand.MORNING -> listOf(LocalTime.of(10, 0))
+        HoursBand.LUNCH   -> listOf(LocalTime.of(12, 0))
+        HoursBand.DINNER  -> listOf(
+            LocalTime.of(19, 0),
+            LocalTime.of(23, 0)
+        )
+    }
+
+    return targetTimes.any { t -> openingHours.isOpenAt(day, t) }
+}
+

@@ -7,7 +7,7 @@ import com.example.application.usecase.ReplyUseCase
 import com.example.config.AppConfig
 import com.example.domain.port.PlaceQueryPort
 import com.example.dbaccess.PlaceRepository
-import com.example.interfaceadapters.googleplaces.PlacesApiClient
+import com.example.interfaceadapters.googleplaces.GooglePlacesApiClient
 import com.example.application.session.RedisSessionStore
 import com.example.application.session.SessionStore
 import com.example.interfaceadapters.line.LineApiClient
@@ -40,13 +40,13 @@ val appModule = module {
     single<PlaceQueryPort> { PlaceRepository() }
 
     // External clients
-    single { PlacesApiClient(AppConfig.googleApiKey) }
+    single { GooglePlacesApiClient(AppConfig.googleApiKey) }
     single { LineApiClient(AppConfig.channelAccessToken) }
 
     // Services
     single {
         SearchService(
-            placesClient = get(),
+            googleClient = get(),
             repository = get()
         )
     }
