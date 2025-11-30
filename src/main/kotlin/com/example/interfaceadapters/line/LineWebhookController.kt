@@ -30,23 +30,26 @@ class LineWebhookController(
             call.respond(HttpStatusCode.Unauthorized); return
         }
 
+        // JSONパースしてevents取得
         val root = Json.parseToJsonElement(String(bodyBytes)).jsonObject
         val events = root["events"]?.jsonArray ?: emptyList()
 
-        for (e in events) {
-            val ev = e.jsonObject
+        for (event in events) {
+            val jsonObject = event.jsonObject
 
-            if (ev["type"]?.jsonPrimitive?.content != "message") continue
+            // message以外スキップ
+            if (jsonObject["type"]?.jsonPrimitive?.content != "message") continue
 
-            val replyToken = ev["replyToken"]?.jsonPrimitive?.content ?: continue
+            // replyToken取得
+            val replyToken = jsonObject["replyToken"]?.jsonPrimitive?.content ?: continue
 
-            val msg = ev["message"]?.jsonObject ?: continue
-
+            // message中身取得
+            val msg = jsonObject["message"]?.jsonObject ?: continue
             if (msg["type"]?.jsonPrimitive?.content != "text") continue
-
             val text = msg["text"]?.jsonPrimitive?.content ?: continue
 
-            val source = ev["source"]?.jsonObject ?: continue
+            // userId取得
+            val source = jsonObject["source"]?.jsonObject ?: continue
             val userId = source["userId"]?.jsonPrimitive?.content ?: continue
 
             val reply = replyUseCase.execute(userId, text)

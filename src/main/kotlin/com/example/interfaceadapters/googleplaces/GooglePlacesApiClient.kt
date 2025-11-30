@@ -10,7 +10,6 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -49,7 +48,9 @@ class GooglePlacesApiClient(private val apiKey: String) {
         language: String = "ja",
         region: String = "JP"
     ): List<PlaceCandidate> {
-        logger.info("GooglePlacesAPIのapiKey：" + apiKey)
+
+        logger.info("GooglePlacesAPI テキスト検索文字：" + query)
+
         val resp: TextSearchResponse = client.post("https://places.googleapis.com/v1/places:searchText") {
             contentType(ContentType.Application.Json)
             header("X-Goog-Api-Key", apiKey)
