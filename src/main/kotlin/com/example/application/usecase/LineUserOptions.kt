@@ -42,7 +42,7 @@ object LineUserOptions {
     val SUBGENRE_SEARCH_WORDS: Map<String, List<String>> = mapOf(
         "寿司" to listOf("寿司"),
         "天ぷら" to listOf("天ぷら"),
-        "うなぎ" to listOf("うなぎ"),
+        "うなぎ" to listOf("鰻"),
         "蕎麦" to listOf("そば"),
         "うどん" to listOf("うどん"),
         "定食" to listOf("定食"),

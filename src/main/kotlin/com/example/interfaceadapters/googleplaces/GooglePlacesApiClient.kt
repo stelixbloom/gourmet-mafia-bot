@@ -10,17 +10,21 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import org.slf4j.LoggerFactory
 
 /**
  * Google Places Text Search (New) クライアント。
  * FieldMask で必要な項目だけ取得。
  */
 class GooglePlacesApiClient(private val apiKey: String) {
+
+    private val logger = LoggerFactory.getLogger("GourmetMafiaAppResponseLog")
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
@@ -45,6 +49,7 @@ class GooglePlacesApiClient(private val apiKey: String) {
         language: String = "ja",
         region: String = "JP"
     ): List<PlaceCandidate> {
+        logger.info("GooglePlacesAPIのapiKey：" + apiKey)
         val resp: TextSearchResponse = client.post("https://places.googleapis.com/v1/places:searchText") {
             contentType(ContentType.Application.Json)
             header("X-Goog-Api-Key", apiKey)
