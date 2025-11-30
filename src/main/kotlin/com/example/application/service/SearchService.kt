@@ -4,7 +4,6 @@ import com.example.domain.model.HoursBand
 import com.example.domain.port.PlaceQueryPort
 import com.example.interfaceadapters.googleplaces.PlaceCandidate
 import com.example.interfaceadapters.googleplaces.PlacesApiClient
-import com.example.interfaceadapters.googleplaces.ensureMapsUrl
 import com.example.interfaceadapters.googleplaces.matchesPrice
 
 /**

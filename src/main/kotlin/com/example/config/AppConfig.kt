@@ -7,7 +7,7 @@ object AppConfig {
     val channelAccessToken: String = env("LINE_ACCESS_TOKEN")
     val databaseUrl: String = env("DATABASE_URL")  // RenderのPostgres接続URL
     val redisUrl: String = env("REDIS_URL")  // RenderのPostgres接続URL
-    val monthlyLimit: Int = 300  // RenderのPostgres接続URL
+    val monthlyLimit: Int = 300  // ユーザーの月のリクエスト上限数
 
     private fun env(key: String) =
         System.getenv(key) ?: error("Missing env: $key")
