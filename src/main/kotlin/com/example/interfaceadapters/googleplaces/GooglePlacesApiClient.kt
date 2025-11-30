@@ -30,13 +30,12 @@ class GooglePlacesApiClient(private val apiKey: String) {
     }
 
     /**
-     * 例: buildQuery("渋谷区", "中華", HoursBand.LUNCH) → "渋谷区 中華 ランチ"
+     * 例: buildQuery("渋谷区", "中華") → "渋谷区 中華"
      */
-    fun buildQuery(area: String, genreToken: String?, hoursBand: HoursBand?): String =
+    fun buildQuery(area: String, genreToken: String?): String =
         listOfNotNull(
             area.trim().ifBlank { null },
-            genreToken?.trim()?.ifBlank { null },
-            hoursBand?.hoursSearchWord
+            genreToken?.trim()?.ifBlank { null }
         ).joinToString(" ")
 
     /**
@@ -231,7 +230,7 @@ fun matchesHoursBand(
     now: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"))
 ): Boolean {
     if (hoursBand == null) return true
-    if (openingHours == null) return true  // 厳しくしたければ false に変える
+    if (openingHours == null) return true  // 厳しくしたい場合falseに変える
 
     val day = now.dayOfWeek
 

@@ -24,8 +24,7 @@ class SearchService(
 
         val query = googleClient.buildQuery(
             area = area,
-            genreToken = genreToken,
-            hoursBand = hoursBand
+            genreToken = genreToken
         )
         val candidates = googleClient.textSearch(query)
 
