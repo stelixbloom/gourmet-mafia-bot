@@ -44,12 +44,12 @@ class GooglePlacesApiClient(private val apiKey: String) {
      * 返り値は API の項目をまとめた PlaceCandidate のリスト。
      */
     suspend fun textSearch(
-        query: String,
+        textQuery: String,
         language: String = "ja",
         region: String = "JP"
     ): List<PlaceCandidate> {
 
-        logger.info("GooglePlacesAPI テキスト検索文字：" + query)
+        logger.info("GooglePlacesAPI テキスト検索文字：" + textQuery)
 
         val resp: TextSearchResponse = client.post("https://places.googleapis.com/v1/places:searchText") {
             contentType(ContentType.Application.Json)
@@ -60,7 +60,7 @@ class GooglePlacesApiClient(private val apiKey: String) {
             )
             setBody(
                 mapOf(
-                    "textQuery" to query,
+                    "textQuery" to textQuery,
                     "languageCode" to language,
                     "regionCode" to region
                 )

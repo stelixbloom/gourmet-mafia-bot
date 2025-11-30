@@ -157,32 +157,34 @@ class ReplyUseCase(
 
                     if (results.isEmpty()) {
                         TextReplyMessageDto(
-                            text = "該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢"
+                            text = "検索ワード🔍（${done.area} / ${done.genreLabel ?: "おまかせ"} " +
+                                    (done.subgenreLabel?.let { "（$it）" } ?: "") +
+                                        " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）" +
+                                    " \n\n該当するお店がありませんでした。。\n条件を変えてもう一度検索してください😢"
                         )
                     } else {
-                        val sb = StringBuilder()
-                        for (result in results) {
-                            // 1行目: 店名
-                            sb.append("⭐️").append(result.name).append('\n')
 
-                            // 2行目以降: 情報ブロック（店名とURLの“間”に入れる）
-                            // 同じ見出し幅で揃える（おすすめ/メモ）
+                        val responseText = StringBuilder()
+                        for (result in results) {
+
+                            // 店名
+                            responseText.append("⭐️").append(result.name).append('\n')
+                            // DBに情報あれば
                             if (result.recommended) {
-                                sb.append("グルメマフィア イチオシのお店😎✨\n")
+                                responseText.append("グルメマフィア イチオシのお店😎✨\n")
                             }
                             if (!result.comment.isNullOrBlank()) {
-                                sb.append("   メモ　　: ").append(result.comment).append('\n')
+                                responseText.append("   メモ　　: ").append(result.comment).append('\n')
                             }
-
-                            // 最後にURL
-                            sb.append(result.googleMapsUri).append('\n').append('\n')
+                            // URL
+                            responseText.append(result.googleMapsUri).append('\n').append('\n')
                         }
                         TextReplyMessageDto(
                             text =
                                 "検索ワード🔍（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
                                         (done.subgenreLabel?.let { "（$it）" } ?: "") +
                                         " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）\n\nおすすめのお店はこちら！✨\n\n" +
-                                        sb.toString().trimEnd()
+                                        responseText.toString().trimEnd()
                         )
                     }
                 }
