@@ -98,7 +98,7 @@ object LineUserOptions {
     // 子ジャンルのパース（「指定しない」なら null を返す）
     fun parseSubgenre(parent: String, input: String): Pair<String?, Set<String>?>? {
         val options = SUBGENRE_USER_LABELS[parent] ?: return null
-        if (input == "指定しない") return null  // サブ指定なし＝親だけで検索
+        if (input == "指定しない") return null  // サブ指定なしの場合親だけで検索
         if (input !in options) return null
         val words = SUBGENRE_SEARCH_WORDS[input] ?: listOf(input)
         return input to words.toSet()

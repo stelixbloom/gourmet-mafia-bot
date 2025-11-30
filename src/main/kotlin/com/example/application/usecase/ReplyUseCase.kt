@@ -18,6 +18,10 @@ class ReplyUseCase(
     private val sessionStore: SessionStore,
     private val quotaService: MonthlyQuotaService
 ) {
+
+    // 「戻る」トリガー用キーワード
+    private val BACK_KEYWORDS = setOf("前の質問に戻る", "戻る")
+
     suspend fun execute(userId: String, textRaw: String): LineReplyMessageDto {
         val text = textRaw.trim()
 
@@ -45,8 +49,13 @@ class ReplyUseCase(
             session = SearchSession(userId = userId, step = Step.WAIT_AREA)
             sessionStore.save(session)
             return TextReplyMessageDto(
-                text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿／渋谷駅／東京 日本橋）",
+                text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿 ／ 渋谷駅 ／ 東京 日本橋）",
             )
+        }
+
+        // 前の質問に戻る
+        if (text in BACK_KEYWORDS) {
+            return this.handleBack(session)
         }
 
         // 「希望エリア」 → 「希望ジャンル（親）」 → 「希望ジャンル（サブ）」 → 「希望価格」 →「 利用シーン」 → 検索（GoogleAPI & DB）
@@ -136,7 +145,7 @@ class ReplyUseCase(
                     }
 
                     // ------- Places API 検索 -------
-                    val genreToken = genreTokenForTextSearch(done.genreLabel, done.subgenreLabel)
+                    val genreToken = this.genreTokenForTextSearch(done.genreLabel, done.subgenreLabel)
                     val results = searchService.search(
                         area        = done.area!!,
                         genreToken  = genreToken,      // サブがあればサブトークン優先
@@ -177,6 +186,82 @@ class ReplyUseCase(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * 前の質問に戻る処理
+     */
+    private fun handleBack(session: SearchSession?): LineReplyMessageDto {
+
+        if (session == null) {
+            // セッションが無いのに戻ろうとしている場合
+            return TextReplyMessageDto(
+                text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿 ／ 渋谷駅 ／ 東京 日本橋）"
+            )
+        }
+
+        return when (session.step) {
+
+            Step.WAIT_AREA -> {
+                // すでに一番最初
+                TextReplyMessageDto(
+                    text = "検索したいエリアを入力してください📍\n（例：東京都 渋谷区 恵比寿 ／ 渋谷駅 ／ 東京 日本橋）"
+                )
+            }
+
+            Step.WAIT_GENRE -> {
+                // エリア入力に戻す
+                val next = session.copy(step = Step.WAIT_AREA)
+                sessionStore.save(next)
+                TextReplyMessageDto(
+                    text = "検索したいエリアを入力し直してください📍\n（例：東京都 渋谷区 恵比寿 ／ 渋谷駅 ／ 東京 日本橋）"
+                )
+            }
+
+            Step.WAIT_SUBGENRE -> {
+                // 親ジャンル選択に戻す
+                val next = session.copy(step = Step.WAIT_GENRE, subgenreLabel = null)
+                sessionStore.save(next)
+                FlexTemplates.genreParent()
+            }
+
+            Step.WAIT_PRICE -> {
+                // 価格 → （サブジャンル or 親ジャンル）へ戻す
+                val genre = session.genreLabel
+                val hasSubOptions = genre != null &&
+                        (LineUserOptions.SUBGENRE_USER_LABELS[genre]?.isNotEmpty() == true)
+
+                val nextStep =
+                    if (hasSubOptions && genre != "おまかせ") Step.WAIT_SUBGENRE else Step.WAIT_GENRE
+
+                val next = session.copy(
+                    step = nextStep,
+                    priceLabel = null,
+                    priceLevels = null
+                )
+                sessionStore.save(next)
+
+                if (nextStep == Step.WAIT_SUBGENRE) {
+                    FlexTemplates.genreSub(
+                        genre ?: "",
+                        LineUserOptions.SUBGENRE_USER_LABELS[genre] ?: emptyList()
+                    )
+                } else {
+                    FlexTemplates.genreParent()
+                }
+            }
+
+            Step.WAIT_HOURS -> {
+                // 利用シーン → 価格へ戻す
+                val next = session.copy(
+                    step = Step.WAIT_PRICE,
+                    hoursLabel = null,
+                    hoursBand = null
+                )
+                sessionStore.save(next)
+                FlexTemplates.price()
             }
         }
     }

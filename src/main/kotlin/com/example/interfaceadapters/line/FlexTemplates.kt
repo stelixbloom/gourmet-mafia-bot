@@ -6,10 +6,13 @@ import kotlinx.serialization.json.*
 
 object FlexTemplates {
 
-    fun buttonsBubble(
+    private val BACK_LABEL = "前の質問に戻る"
+
+    private fun buttonsBubble(
         title: String,
         subtitle: String,
-        labels: List<String>
+        labels: List<String>,
+        addBackButton: Boolean = true
     ): JsonObject = buildJsonObject {
         put("type", "bubble")
         put("size", "mega")
@@ -44,6 +47,18 @@ object FlexTemplates {
                                     put("type", "message")
                                     put("label", label)
                                     put("text", label)
+                                }
+                            }
+                        }
+
+                        if (addBackButton) {
+                            addJsonObject {
+                                put("type", "button")
+                                put("style", "primary")
+                                putJsonObject("action") {
+                                    put("type", "message")
+                                    put("label", BACK_LABEL)
+                                    put("text", BACK_LABEL)
                                 }
                             }
                         }
