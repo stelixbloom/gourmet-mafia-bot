@@ -152,25 +152,25 @@ class ReplyUseCase(
                         )
                     } else {
                         val sb = StringBuilder()
-                        for (r in results) {
+                        for (result in results) {
                             // 1行目: 店名
-                            sb.append("⭐️").append(r.name).append('\n')
+                            sb.append("⭐️").append(result.name).append('\n')
 
                             // 2行目以降: 情報ブロック（店名とURLの“間”に入れる）
                             // 同じ見出し幅で揃える（おすすめ/メモ）
-                            if (r.recommended) {
+                            if (result.recommended) {
                                 sb.append("グルメマフィア イチオシのお店😎✨\n")
                             }
-                            if (!r.comment.isNullOrBlank()) {
-                                sb.append("   メモ　　: ").append(r.comment).append('\n')
+                            if (!result.comment.isNullOrBlank()) {
+                                sb.append("   メモ　　: ").append(result.comment).append('\n')
                             }
 
                             // 最後にURL
-                            sb.append(r.googleMapsUri).append('\n').append('\n')
+                            sb.append(result.googleMapsUri).append('\n').append('\n')
                         }
                         TextReplyMessageDto(
                             text =
-                                "検索ワード（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
+                                "検索ワード🔍（${done.area} / ${done.genreLabel ?: "おまかせ"}" +
                                         (done.subgenreLabel?.let { "（$it）" } ?: "") +
                                         " / ${done.priceLabel ?: "おまかせ"} / ${done.hoursLabel ?: "おまかせ"}）\n\nおすすめのお店はこちら！✨\n\n" +
                                         sb.toString().trimEnd()
@@ -186,7 +186,7 @@ class ReplyUseCase(
      *
      * サブジャンルがあれば、そのまま返却
      * 親ジャンルしかない場合、親ジャンルを返却
-     * 親ジャンルすらない場合、「おまかせ」の場合、nullを返却
+     * 親ジャンルすらない場合、「おまかせ」の場合、nullを返却（親ジャンルは必須になっている想定）
      */
     fun genreTokenForTextSearch(genreLabel: String?, subgenreLabel: String?): String? {
         val parent = genreLabel?.trim().orEmpty()
