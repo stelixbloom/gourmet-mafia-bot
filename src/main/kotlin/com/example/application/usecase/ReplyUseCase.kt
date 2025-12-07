@@ -174,7 +174,7 @@ class ReplyUseCase(
                                 responseText.append("グルメマフィア イチオシのお店😎✨\n")
                             }
                             if (!result.comment.isNullOrBlank()) {
-                                responseText.append("   メモ　　: ").append(result.comment).append('\n')
+                                responseText.append("メモ📝： ").append(result.comment).append('\n')
                             }
                             // URL
                             responseText.append(result.googleMapsUri).append('\n').append('\n')
