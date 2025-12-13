@@ -25,7 +25,10 @@ val appModule = module {
 
     // Session
     single<SessionStore> {
-        RedisSessionStore(get())  // JedisPooledを一度だけ定義
+        RedisSessionStore(
+            client = get(),  // JedisPooled
+            prefix = AppConfig.sessionPrefix  // "prod" or "dev"
+        )  // JedisPooledを一度だけ定義
     }
 
     // 月間クオータ（ユーザー単位 / 月300回）

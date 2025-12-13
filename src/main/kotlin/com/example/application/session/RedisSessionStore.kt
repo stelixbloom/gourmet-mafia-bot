@@ -5,10 +5,11 @@ import kotlinx.serialization.json.Json
 import redis.clients.jedis.JedisPooled
 
 class RedisSessionStore(
-    private val client: JedisPooled
+    private val client: JedisPooled,
+    private val prefix: String
 ) : SessionStore {
 
-    private fun key(id: String) = "session:$id"
+    private fun key(id: String) = "session:$prefix:$id"
 
     override fun get(userId: String): SearchSession? {
         val s = client.get(key(userId)) ?: return null
