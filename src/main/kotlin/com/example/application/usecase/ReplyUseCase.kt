@@ -171,7 +171,7 @@ class ReplyUseCase(
                             responseText.append("⭐️").append(result.name).append('\n')
                             // DBに情報あれば
                             if (result.recommended) {
-                                responseText.append("グルメマフィア イチオシのお店😎✨\n")
+                                responseText.append("グルメマフィア 厳選のお店😎✨\n")
                             }
                             if (!result.comment.isNullOrBlank()) {
                                 responseText.append("メモ📝： ").append(result.comment).append('\n')

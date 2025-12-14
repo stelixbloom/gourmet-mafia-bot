@@ -37,7 +37,10 @@ fun Application.module() {
     }
 
     // DB設定
-    DatabaseFactory.init(AppConfig.databaseUrl)
+    DatabaseFactory.init(
+        databaseUrl = AppConfig.databaseUrl,
+        schema = AppConfig.dbSchema
+    )
 
     val controller: LineWebhookController by inject()
 
